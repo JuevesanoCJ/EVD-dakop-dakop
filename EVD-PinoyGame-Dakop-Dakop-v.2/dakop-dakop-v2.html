@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dakop-Dakop - Filipino Tag Game</title>
+    <link rel="stylesheet" href="styles-v2.css">
+</head>
+<body>
+    <!-- Main Menu Screen -->
+    <div id="mainMenu" class="screen active">
+        <div class="menu-container">
+            <h1>Dakop-Dakop</h1>
+            <p class="subtitle">Traditional Filipino Tag Game</p>
+            
+            <div class="game-settings">
+                <div class="setting-group">
+                    <label for="roleSelect">Choose Your Role:</label>
+                    <select id="roleSelect">
+                        <option value="random">Random</option>
+                        <option value="chaser">Chaser (It)</option>
+                        <option value="runner">Runner (Not It)</option>
+                    </select>
+                </div>
+                
+                <div class="setting-group">
+                    <label for="modeSelect">Game Mode:</label>
+                    <select id="modeSelect">
+                        <option value="single">Single Chaser</option>
+                        <option value="multi">Multi-Chaser</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="menu-buttons">
+                <button id="instructionsBtn" class="btn btn-secondary">Instructions</button>
+                <button id="startGameBtn" class="btn btn-primary">Start Game</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Instructions Screen -->
+    <div id="instructionsScreen" class="screen">
+        <div class="instructions-container">
+            <h2>How to Play Dakop-Dakop</h2>
+            
+            <div class="instructions-content">
+                <div class="instruction-section">
+                    <h3>Basic Rules:</h3>
+                    <ul>
+                        <li>Use WASD or Arrow keys to move your player</li>
+                        <li>Chasers (red) try to tag runners (blue)</li>
+                        <li>Avoid being tagged by staying away from chasers</li>
+                        <li>Use walls and obstacles as cover</li>
+                    </ul>
+                </div>
+                
+                <div class="instruction-section">
+                    <h3>Single Chaser Mode:</h3>
+                    <ul>
+                        <li>One player is "it" at the start</li>
+                        <li>When tagged, you become the new chaser</li>
+                        <li>Tag-back rule: You can immediately tag back the previous chaser</li>
+                        <li>Game continues until time runs out</li>
+                    </ul>
+                </div>
+                
+                <div class="instruction-section">
+                    <h3>Multi-Chaser Mode:</h3>
+                    <ul>
+                        <li>Tagged players become additional chasers</li>
+                        <li>Game ends when all players are tagged</li>
+                        <li>Ranking based on order of being tagged (last = 1st place)</li>
+                        <li>No tag-back rule in this mode</li>
+                    </ul>
+                </div>
+                
+                <div class="instruction-section">
+                    <h3>Local Filipino Twist:</h3>
+                    <ul>
+                        <li>"Langit-lupa" safe zones (elevated areas in blue)</li>
+                        <li>Limited time in safe zones (3 seconds max)</li>
+                        <li>"Freeze" command - all players stop for 2 seconds</li>
+                        <li>Power-ups: Speed boost and temporary invincibility</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <button id="backToMenuBtn" class="btn btn-secondary">Back to Menu</button>
+        </div>
+    </div>
+
+    <!-- Game Screen -->
+    <div id="gameScreen" class="screen">
+        <div class="game-ui">
+            <div class="game-info">
+                <div class="info-item">
+                    <span>Mode: <span id="currentMode">Single Chaser</span></span>
+                </div>
+                <div class="info-item">
+                    <span>Time: <span id="gameTimer">180</span>s</span>
+                </div>
+                <div class="info-item">
+                    <span>Players Left: <span id="playersLeft">8</span></span>
+                </div>
+            </div>
+            <div class="game-controls">
+                <button id="pauseBtn" class="btn btn-small">Pause</button>
+                <button id="quitBtn" class="btn btn-small btn-danger">Quit</button>
+            </div>
+        </div>
+        
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+        
+        <div class="player-status">
+            <div id="playerRole" class="status-indicator">
+                <span>You are: <span id="roleText">Runner</span></span>
+            </div>
+            <div id="safeZoneTimer" class="status-indicator hidden">
+                <span>Safe Zone: <span id="safeTimeLeft">3</span>s</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Over Screen -->
+    <div id="gameOverScreen" class="screen">
+        <div class="gameover-container">
+            <h2 id="gameOverTitle">Game Over!</h2>
+            
+            <div class="final-stats">
+                <div id="playerResult" class="result-text"></div>
+                <div id="gameStats" class="stats-container"></div>
+            </div>
+            
+            <div class="leaderboard">
+                <h3>Final Rankings</h3>
+                <ol id="finalRankings"></ol>
+            </div>
+            
+            <div class="gameover-buttons">
+                <button id="playAgainBtn" class="btn btn-primary">Play Again</button>
+                <button id="mainMenuBtn" class="btn btn-secondary">Main Menu</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pause Screen -->
+    <div id="pauseScreen" class="screen overlay">
+        <div class="pause-container">
+            <h2>Game Paused</h2>
+            <div class="pause-buttons">
+                <button id="resumeBtn" class="btn btn-primary">Resume</button>
+                <button id="pauseQuitBtn" class="btn btn-secondary">Quit to Menu</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script-v2.js"></script>
+</body>
+</html>
