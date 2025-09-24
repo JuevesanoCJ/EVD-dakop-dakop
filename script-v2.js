@@ -93,6 +93,26 @@ class GameState {
         document.addEventListener('keyup', (e) => {
             this.keys[e.key.toLowerCase()] = false;
         });
+
+        //Mobile control
+        // Mobile controls
+        document.querySelectorAll('.ctrl-btn').forEach(btn => {
+            const dir = btn.dataset.dir;
+            btn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                if (dir === 'up') this.keys['w'] = true;
+                if (dir === 'down') this.keys['s'] = true;
+                if (dir === 'left') this.keys['a'] = true;
+                if (dir === 'right') this.keys['d'] = true;
+            });
+            btn.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                if (dir === 'up') this.keys['w'] = false;
+                if (dir === 'down') this.keys['s'] = false;
+                if (dir === 'left') this.keys['a'] = false;
+                if (dir === 'right') this.keys['d'] = false;
+            });
+        });
     }
     
     showScreen(screenName) {
@@ -846,3 +866,4 @@ const game = new GameState();
 document.addEventListener('DOMContentLoaded', () => {
     game.init();
 });
+
