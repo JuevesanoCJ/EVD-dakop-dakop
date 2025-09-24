@@ -438,18 +438,18 @@ class GameState {
     
     tagPlayer(chaser, runner, chaserIndex, runnerIndex) {
         // Prevent tag-back immediately after being tagged (single mode only)
-        if (this.gameMode === 'single' && !chaser.canTagBack) {
-            return;
-        }
-        
         this.lastTagTime = Date.now();
-        
+
         if (this.gameMode === 'single') {
-            // Single chaser mode: switch roles
+            // Prevent immediate tag-back
+            if (runner.canTagBack === false) return;
+        
+            // Switch roles
             chaser.isChaser = false;
-            chaser.canTagBack = false;
+            chaser.canTagBack = true;   // Old chaser can tag back
             runner.isChaser = true;
-            runner.canTagBack = true;
+            runner.canTagBack = false;  // New chaser can't instantly re-tag
+
             
             // Update UI if human player involved
             if (runnerIndex === this.playerIndex) {
@@ -866,4 +866,5 @@ const game = new GameState();
 document.addEventListener('DOMContentLoaded', () => {
     game.init();
 });
+
 
