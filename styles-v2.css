@@ -405,36 +405,49 @@ body {
     }
 }
 
+/* Mobile Controls */
 .mobile-controls {
-    position: absolute;
+    position: fixed;
     bottom: 20px;
     left: 20px;
-    display: grid;
-    grid-template-rows: auto auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     gap: 10px;
     z-index: 2000;
+    user-select: none;
 }
 
 .mobile-controls .middle-row {
-    display: grid;
-    grid-template-columns: auto auto auto;
+    display: flex;
     gap: 10px;
-    justify-content: center;
 }
 
 .ctrl-btn {
-    width: 60px;
-    height: 60px;
+    width: 65px;
+    height: 65px;
     font-size: 24px;
     font-weight: bold;
     border: none;
     border-radius: 50%;
-    background: rgba(52, 152, 219, 0.9);
+    background: rgba(52, 152, 219, 0.85);
     color: white;
     box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    touch-action: none; /* Prevent scrolling when pressing */
 }
 
 .ctrl-btn:active {
     background: rgba(41, 128, 185, 1);
+    transform: scale(0.95);
 }
+
+/* Responsive tweak: make controls smaller on very small screens */
+@media (max-width: 600px) {
+    .ctrl-btn {
+        width: 55px;
+        height: 55px;
+        font-size: 20px;
+    }
+}
+
 
