@@ -405,22 +405,24 @@ body {
     }
 }
 
-/* Mobile Controls */
+/* Shared mobile controls */
 .mobile-controls {
     position: fixed;
-    bottom: 20px;
-    left: 20px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
     z-index: 2000;
+    display: flex;
+    gap: 10px;
     user-select: none;
 }
 
-.mobile-controls .middle-row {
-    display: flex;
-    gap: 10px;
+.mobile-controls.left {
+    bottom: 20px;
+    left: 20px;
+}
+
+.mobile-controls.right {
+    bottom: 20px;
+    right: 20px;
+    flex-direction: column; /* stack up/down vertically */
 }
 
 .ctrl-btn {
@@ -433,7 +435,7 @@ body {
     background: rgba(52, 152, 219, 0.85);
     color: white;
     box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-    touch-action: none; /* Prevent scrolling when pressing */
+    touch-action: none;
 }
 
 .ctrl-btn:active {
@@ -441,7 +443,6 @@ body {
     transform: scale(0.95);
 }
 
-/* Responsive tweak: make controls smaller on very small screens */
 @media (max-width: 600px) {
     .ctrl-btn {
         width: 55px;
@@ -449,5 +450,7 @@ body {
         font-size: 20px;
     }
 }
+
+
 
 
