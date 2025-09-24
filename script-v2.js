@@ -450,57 +450,54 @@ class GameState {
     }
     
     tagPlayer(chaser, runner, chaserIndex, runnerIndex) {
-        // NOTE: previous code blocked tagging based on canTagBack causing initial chaser
-        // to never be able to tag. That check has been removed.
-        // Tag cooldown still prevents spam (checked in checkPlayerCollisions).
-        this.lastTagTime = Date.now();
-
-        if (this.gameMode === 'single') {
-            // Single chaser mode: switch roles
-            // Previous chaser becomes runner, runner becomes chaser.
-            // We'll allow the previous chaser a short "tag-back window" if desired (1500ms).
-            chaser.isChaser = false;
-            runner.isChaser = true;
-
-            // Allow previous chaser to tag-back for a small window (optional rule)
-            chaser.canTagBack = true;
-            setTimeout(() => { chaser.canTagBack = false; }, 5500);
-
-            // New chaser can't immediately re-tag the previous chaser via this flag,
-            // but tag cooldown and movement usually prevent instant re-tags.
-            runner.canTagBack = false;
-
-            // Debug log to help test tags
-            console.log(`TAG (single): Player ${chaserIndex + 1} tagged Player ${runnerIndex + 1}`);
-
-            // Update UI if human player involved
-            if (runnerIndex === this.playerIndex) {
-                document.getElementById('roleText').textContent = 'Chaser';
-                document.getElementById('playerRole').className = 'status-indicator chaser';
-            } else if (chaserIndex === this.playerIndex) {
-                document.getElementById('roleText').textContent = 'Runner';
-                document.getElementById('playerRole').className = 'status-indicator runner';
-            }
-        } else {
-            // Multi-chaser mode: add to chasers
-            runner.isChaser = true;
-            this.taggedPlayers.push({
-                playerId: runnerIndex,
-                time: Date.now() - this.gameStartTime,
-                taggedBy: chaserIndex
-            });
-
-            console.log(`TAG (multi): Player ${chaserIndex + 1} tagged Player ${runnerIndex + 1}`);
-
-            // Update UI if human player was tagged
-            if (runnerIndex === this.playerIndex) {
-                document.getElementById('roleText').textContent = 'Chaser';
-                document.getElementById('playerRole').className = 'status-indicator chaser';
-            }
-        }
-        
-        this.updateGameUI();
+    // 🛡️ Prevent tagging if runner is in a safe zone
+    if (this.isInSafeZone(runner) && !runner.isChaser) {
+        console.log(`SAFE: Player ${runnerIndex + 1} is in safe zone and cannot be tagged`);
+        return;
     }
+
+    this.lastTagTime = Date.now();
+
+    if (this.gameMode === 'single') {
+        // Single chaser mode: switch roles
+        chaser.isChaser = false;
+        runner.isChaser = true;
+
+        // Tag-back logic
+        chaser.canTagBack = false;
+        setTimeout(() => { chaser.canTagBack = true; }, 5500);
+        runner.canTagBack = false;
+
+        console.log(`TAG (single): Player ${chaserIndex + 1} tagged Player ${runnerIndex + 1}`);
+
+        // Update UI
+        if (runnerIndex === this.playerIndex) {
+            document.getElementById('roleText').textContent = 'Chaser';
+            document.getElementById('playerRole').className = 'status-indicator chaser';
+        } else if (chaserIndex === this.playerIndex) {
+            document.getElementById('roleText').textContent = 'Runner';
+            document.getElementById('playerRole').className = 'status-indicator runner';
+        }
+    } else {
+        // Multi-chaser mode
+        runner.isChaser = true;
+        this.taggedPlayers.push({
+            playerId: runnerIndex,
+            time: Date.now() - this.gameStartTime,
+            taggedBy: chaserIndex
+        });
+
+        console.log(`TAG (multi): Player ${chaserIndex + 1} tagged Player ${runnerIndex + 1}`);
+
+        // Update UI
+        if (runnerIndex === this.playerIndex) {
+            document.getElementById('roleText').textContent = 'Chaser';
+            document.getElementById('playerRole').className = 'status-indicator chaser';
+        }
+    }
+
+    this.updateGameUI();
+}
     
     checkSafeZoneCollisions() {
         this.safeZones.forEach(zone => {
@@ -890,6 +887,7 @@ const game = new GameState();
 document.addEventListener('DOMContentLoaded', () => {
     game.init();
 });
+
 
 
 
