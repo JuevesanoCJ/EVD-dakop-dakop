@@ -36,6 +36,17 @@ class GameState {
         this.ctx = this.canvas.getContext('2d');
         this.setupEventListeners();
         this.showScreen('mainMenu');
+
+        // Show mobile controls only on touch devices
+        if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+            document.getElementById('mobileControls').style.display = 'flex';
+            const actionCtrl = document.getElementById('actionControls');
+            if (actionCtrl) actionCtrl.style.display = 'flex';
+        } else {
+            document.getElementById('mobileControls').style.display = 'none';
+            const actionCtrl = document.getElementById('actionControls');
+            if (actionCtrl) actionCtrl.style.display = 'none';
+        }
     }
     
     setupEventListeners() {
@@ -864,3 +875,4 @@ const game = new GameState();
 document.addEventListener('DOMContentLoaded', () => {
     game.init();
 });
+
