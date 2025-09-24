@@ -32,21 +32,18 @@ class GameState {
     }
     
     init() {
-        this.canvas = document.getElementById('gameCanvas');
-        this.ctx = this.canvas.getContext('2d');
-        this.setupEventListeners();
-        this.showScreen('mainMenu');
+    this.canvas = document.getElementById('gameCanvas');
+    this.ctx = this.canvas.getContext('2d');
+    this.setupEventListeners();
+    this.showScreen('mainMenu');
 
-        // Show mobile controls only on touch devices
-        if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
-            document.getElementById('mobileControlsLeft').style.display = 'flex';
-            document.getElementById('mobileControlsRight').style.display = 'flex';
-        } else {
-            document.getElementById('mobileControlsLeft').style.display = 'none';
-            document.getElementById('mobileControlsRight').style.display = 'none';
-        }
+    // 🔹 Force-show mobile controls for testing
+    const leftCtrl = document.getElementById('mobileControlsLeft');
+    const rightCtrl = document.getElementById('mobileControlsRight');
+    if (leftCtrl) leftCtrl.style.display = 'flex';
+    if (rightCtrl) rightCtrl.style.display = 'flex';
+}
 
-    }
     
     setupEventListeners() {
 
@@ -467,7 +464,7 @@ class GameState {
 
             // Allow previous chaser to tag-back for a small window (optional rule)
             chaser.canTagBack = true;
-            setTimeout(() => { chaser.canTagBack = false; }, 1500);
+            setTimeout(() => { chaser.canTagBack = false; }, 5500);
 
             // New chaser can't immediately re-tag the previous chaser via this flag,
             // but tag cooldown and movement usually prevent instant re-tags.
@@ -893,5 +890,6 @@ const game = new GameState();
 document.addEventListener('DOMContentLoaded', () => {
     game.init();
 });
+
 
 
