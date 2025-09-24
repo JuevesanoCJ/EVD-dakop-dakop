@@ -36,6 +36,9 @@ class GameState {
         this.ctx = this.canvas.getContext('2d');
         this.setupEventListeners();
         this.showScreen('mainMenu');
+        this.mapImage = new Image();
+        this.mapImage.src = "assets/map-bg.png";
+
 
         // 🔹 Force-show mobile controls for testing
         const leftCtrl = document.getElementById('mobileControlsLeft');
@@ -901,3 +904,4 @@ const game = new GameState();
 document.addEventListener('DOMContentLoaded', () => {
     game.init();
 });
+
