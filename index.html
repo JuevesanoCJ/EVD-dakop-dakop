@@ -111,6 +111,17 @@
         </div>
         
         <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+        <!--Added for mobile control-->
+        <div id="mobileControls" class="mobile-controls">
+            <button class="ctrl-btn up" data-dir="up">▲</button>
+                <div class="middle-row">
+                    <button class="ctrl-btn left" data-dir="left">◀</button>
+                    <button class="ctrl-btn down" data-dir="down">▼</button>
+                    <button class="ctrl-btn right" data-dir="right">▶</button>
+                </div>
+            </div>
+
         
         <div class="player-status">
             <div id="playerRole" class="status-indicator">
@@ -158,3 +169,4 @@
     <script src="script-v2.js"></script>
 </body>
 </html>
+
