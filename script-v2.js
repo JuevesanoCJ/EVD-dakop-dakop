@@ -464,9 +464,9 @@ class GameState {
         runner.isChaser = true;
 
         // Tag-back logic
-        chaser.canTagBack = false;
-        setTimeout(() => { chaser.canTagBack = true; }, 5500);
-        runner.canTagBack = false;
+        chaser.canTagBack = true;
+        setTimeout(() => { chaser.canTagBack = false; }, 50500);
+        runner.canTagBack = true;
 
         console.log(`TAG (single): Player ${chaserIndex + 1} tagged Player ${runnerIndex + 1}`);
 
@@ -887,6 +887,7 @@ const game = new GameState();
 document.addEventListener('DOMContentLoaded', () => {
     game.init();
 });
+
 
 
 
