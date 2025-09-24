@@ -39,17 +39,17 @@ class GameState {
 
         // Show mobile controls only on touch devices
         if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
-            document.getElementById('mobileControls').style.display = 'flex';
-            const actionCtrl = document.getElementById('actionControls');
-            if (actionCtrl) actionCtrl.style.display = 'flex';
+            document.getElementById('mobileControlsLeft').style.display = 'flex';
+            document.getElementById('mobileControlsRight').style.display = 'flex';
         } else {
-            document.getElementById('mobileControls').style.display = 'none';
-            const actionCtrl = document.getElementById('actionControls');
-            if (actionCtrl) actionCtrl.style.display = 'none';
+            document.getElementById('mobileControlsLeft').style.display = 'none';
+            document.getElementById('mobileControlsRight').style.display = 'none';
         }
+
     }
     
     setupEventListeners() {
+
         // Menu navigation
         document.getElementById('instructionsBtn').addEventListener('click', () => {
             this.showScreen('instructionsScreen');
@@ -106,6 +106,24 @@ class GameState {
         });
 
         // MOBILE: if you previously added mobile buttons, they'll set keys['w','a','s','d'] accordingly
+        // Mobile controls (works for both left + right)
+        document.querySelectorAll('.ctrl-btn').forEach(btn => {
+            const dir = btn.dataset.dir;
+            btn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                if (dir === 'up') this.keys['w'] = true;
+                if (dir === 'down') this.keys['s'] = true;
+                if (dir === 'left') this.keys['a'] = true;
+                if (dir === 'right') this.keys['d'] = true;
+            });
+            btn.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                if (dir === 'up') this.keys['w'] = false;
+                if (dir === 'down') this.keys['s'] = false;
+                if (dir === 'left') this.keys['a'] = false;
+                if (dir === 'right') this.keys['d'] = false;
+            });
+        });
         // (If mobile control elements exist, attach their listeners in HTML / CSS changes)
     }
     
@@ -875,4 +893,5 @@ const game = new GameState();
 document.addEventListener('DOMContentLoaded', () => {
     game.init();
 });
+
 
