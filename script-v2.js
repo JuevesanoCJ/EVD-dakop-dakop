@@ -32,21 +32,13 @@ class GameState {
     }
     
     init() {
-    this.canvas = document.getElementById('gameCanvas');
-    this.ctx = this.canvas.getContext('2d');
-    this.setupEventListeners();
-    this.showScreen('mainMenu');
-
-    // 🔹 Force-show mobile controls for testing
-    const leftCtrl = document.getElementById('mobileControlsLeft');
-    const rightCtrl = document.getElementById('mobileControlsRight');
-    if (leftCtrl) leftCtrl.style.display = 'flex';
-    if (rightCtrl) rightCtrl.style.display = 'flex';
-}
-
+        this.canvas = document.getElementById('gameCanvas');
+        this.ctx = this.canvas.getContext('2d');
+        this.setupEventListeners();
+        this.showScreen('mainMenu');
+    }
     
     setupEventListeners() {
-
         // Menu navigation
         document.getElementById('instructionsBtn').addEventListener('click', () => {
             this.showScreen('instructionsScreen');
@@ -101,27 +93,6 @@ class GameState {
         document.addEventListener('keyup', (e) => {
             this.keys[e.key.toLowerCase()] = false;
         });
-
-        // MOBILE: if you previously added mobile buttons, they'll set keys['w','a','s','d'] accordingly
-        // Mobile controls (works for both left + right)
-        document.querySelectorAll('.ctrl-btn').forEach(btn => {
-            const dir = btn.dataset.dir;
-            btn.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                if (dir === 'up') this.keys['w'] = true;
-                if (dir === 'down') this.keys['s'] = true;
-                if (dir === 'left') this.keys['a'] = true;
-                if (dir === 'right') this.keys['d'] = true;
-            });
-            btn.addEventListener('touchend', (e) => {
-                e.preventDefault();
-                if (dir === 'up') this.keys['w'] = false;
-                if (dir === 'down') this.keys['s'] = false;
-                if (dir === 'left') this.keys['a'] = false;
-                if (dir === 'right') this.keys['d'] = false;
-            });
-        });
-        // (If mobile control elements exist, attach their listeners in HTML / CSS changes)
     }
     
     showScreen(screenName) {
@@ -188,10 +159,7 @@ class GameState {
     
     assignInitialRoles() {
         // Reset all players
-        this.players.forEach(player => {
-            player.isChaser = false;
-            player.canTagBack = false;
-        });
+        this.players.forEach(player => player.isChaser = false);
         this.taggedPlayers = [];
         
         let chaserIndex;
@@ -207,7 +175,6 @@ class GameState {
         }
         
         this.players[chaserIndex].isChaser = true;
-        // initial chaser can tag others normally; do not block them
         this.players[chaserIndex].canTagBack = false;
         
         // Update UI role indicator
@@ -450,55 +417,46 @@ class GameState {
     }
     
     tagPlayer(chaser, runner, chaserIndex, runnerIndex) {
-    // 🛡️ Prevent tagging if runner is in a safe zone
-    if (this.isInSafeZone(runner) && !runner.isChaser) {
-        console.log(`SAFE: Player ${runnerIndex + 1} is in safe zone and cannot be tagged`);
-        return;
-    }
-
-    this.lastTagTime = Date.now();
-
-    if (this.gameMode === 'single') {
-        // Single chaser mode: switch roles
-        chaser.isChaser = false;
-        runner.isChaser = true;
-
-        // Tag-back logic
-        chaser.canTagBack = true;
-        setTimeout(() => { chaser.canTagBack = false; }, 50500);
-        runner.canTagBack = true;
-
-        console.log(`TAG (single): Player ${chaserIndex + 1} tagged Player ${runnerIndex + 1}`);
-
-        // Update UI
-        if (runnerIndex === this.playerIndex) {
-            document.getElementById('roleText').textContent = 'Chaser';
-            document.getElementById('playerRole').className = 'status-indicator chaser';
-        } else if (chaserIndex === this.playerIndex) {
-            document.getElementById('roleText').textContent = 'Runner';
-            document.getElementById('playerRole').className = 'status-indicator runner';
+        // Prevent tag-back immediately after being tagged (single mode only)
+        if (this.gameMode === 'single' && !chaser.canTagBack) {
+            return;
         }
-    } 
-    else {
-        // Multi-chaser mode
-        runner.isChaser = true;
-        this.taggedPlayers.push({
-            playerId: runnerIndex,
-            time: Date.now() - this.gameStartTime,
-            taggedBy: chaserIndex
-        });
-
-        console.log(`TAG (multi): Player ${chaserIndex + 1} tagged Player ${runnerIndex + 1}`);
-
-        // Update UI
-        if (runnerIndex === this.playerIndex) {
-            document.getElementById('roleText').textContent = 'Chaser';
-            document.getElementById('playerRole').className = 'status-indicator chaser';
+        
+        this.lastTagTime = Date.now();
+        
+        if (this.gameMode === 'single') {
+            // Single chaser mode: switch roles
+            chaser.isChaser = false;
+            chaser.canTagBack = false;
+            runner.isChaser = true;
+            runner.canTagBack = true;
+            
+            // Update UI if human player involved
+            if (runnerIndex === this.playerIndex) {
+                document.getElementById('roleText').textContent = 'Chaser';
+                document.getElementById('playerRole').className = 'status-indicator chaser';
+            } else if (chaserIndex === this.playerIndex) {
+                document.getElementById('roleText').textContent = 'Runner';
+                document.getElementById('playerRole').className = 'status-indicator runner';
+            }
+        } else {
+            // Multi-chaser mode: add to chasers
+            runner.isChaser = true;
+            this.taggedPlayers.push({
+                playerId: runnerIndex,
+                time: Date.now() - this.gameStartTime,
+                taggedBy: chaserIndex
+            });
+            
+            // Update UI if human player was tagged
+            if (runnerIndex === this.playerIndex) {
+                document.getElementById('roleText').textContent = 'Chaser';
+                document.getElementById('playerRole').className = 'status-indicator chaser';
+            }
         }
+        
+        this.updateGameUI();
     }
-
-    this.updateGameUI();
-}
     
     checkSafeZoneCollisions() {
         this.safeZones.forEach(zone => {
@@ -506,7 +464,7 @@ class GameState {
             
             this.players.forEach((player, index) => {
                 if (player.x >= zone.x && player.x <= zone.x + zone.width &&
-                    player.y >= zone.y && player.y <= zone.y + zone.height) {
+                    player.y >= zone.y && player.y <= zone.y + zone.width) {
                     
                     zone.occupants.push(index);
                     player.inSafeZone = true;
@@ -818,9 +776,7 @@ class GameState {
                 }
                 rankingsList.appendChild(li);
             });
-        } 
-        runner.canTagBack = false;
-    else {
+        } else {
             document.querySelector('.leaderboard').style.display = 'none';
         }
         
@@ -890,8 +846,3 @@ const game = new GameState();
 document.addEventListener('DOMContentLoaded', () => {
     game.init();
 });
-
-
-
-
-
