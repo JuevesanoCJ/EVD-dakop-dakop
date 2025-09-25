@@ -404,3 +404,52 @@ body {
         gap: 1rem;
     }
 }
+
+/* Shared mobile controls */
+.mobile-controls {
+    position: fixed;
+    z-index: 2000;
+    display: flex;
+    gap: 10px;
+    user-select: none;
+}
+
+.mobile-controls.left {
+    bottom: 20px;
+    left: 20px;
+}
+
+.mobile-controls.right {
+    bottom: 20px;
+    right: 20px;
+    flex-direction: column; /* stack up/down vertically */
+}
+
+.ctrl-btn {
+    width: 65px;
+    height: 65px;
+    font-size: 24px;
+    font-weight: bold;
+    border: none;
+    border-radius: 50%;
+    background: rgba(52, 152, 219, 0.85);
+    color: white;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    touch-action: none;
+}
+
+.ctrl-btn:active {
+    background: rgba(41, 128, 185, 1);
+    transform: scale(0.95);
+}
+
+@media (max-width: 600px) {
+    .ctrl-btn {
+        width: 55px;
+        height: 55px;
+        font-size: 20px;
+    }
+}
+
+
+
