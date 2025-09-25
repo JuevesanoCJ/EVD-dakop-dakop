@@ -32,21 +32,19 @@ class GameState {
     }
     
     init() {
-        this.canvas = document.getElementById('gameCanvas');
-        this.ctx = this.canvas.getContext('2d');
-        this.setupEventListeners();
-        this.showScreen('mainMenu');
-        this.mapImage = new Image();
-        this.mapImage.src = "assets/map-bg.png";
+    this.canvas = document.getElementById('gameCanvas');
+    this.ctx = this.canvas.getContext('2d');
+    this.setupEventListeners();
+    this.showScreen('mainMenu');
 
+    // 🔹 Force-show mobile controls for testing
+    const leftCtrl = document.getElementById('mobileControlsLeft');
+    const rightCtrl = document.getElementById('mobileControlsRight');
+    if (leftCtrl) leftCtrl.style.display = 'flex';
+    if (rightCtrl) rightCtrl.style.display = 'flex';
+}
 
-        // 🔹 Force-show mobile controls for testing
-        const leftCtrl = document.getElementById('mobileControlsLeft');
-        const rightCtrl = document.getElementById('mobileControlsRight');
-        if (leftCtrl) leftCtrl.style.display = 'flex';
-        if (rightCtrl) rightCtrl.style.display = 'flex';
-    }
-
+    
     setupEventListeners() {
 
         // Menu navigation
@@ -301,10 +299,9 @@ class GameState {
             player.update(deltaTime);
         });
         
-        // IMPORTANT: update safe zone flags BEFORE collision checks
-        this.checkSafeZoneCollisions();
-        // Then check collisions (so tags respect safe zones)
+        // Check collisions
         this.checkPlayerCollisions();
+        this.checkSafeZoneCollisions();
         this.checkPowerUpCollisions();
         
         // Update safe zone timers
@@ -315,9 +312,6 @@ class GameState {
     }
     
     updateHumanPlayer(player, deltaTime) {
-        // if frozen, don't move
-        if (player.frozen) return;
-
         const speed = player.hasSpeedBoost ? player.speed * 1.5 : player.speed;
         
         if (this.keys['w'] || this.keys['arrowup']) {
@@ -339,13 +333,10 @@ class GameState {
     }
     
     updateAIPlayer(player, deltaTime) {
-        // if frozen, don't move
-        if (player.frozen) return;
-
         const speed = player.hasSpeedBoost ? player.speed * 1.5 : player.speed;
         
         if (player.isChaser) {
-            // Chase nearest non-chaser that is not in a safe zone
+            // Chase nearest non-chaser
             const target = this.findNearestRunner(player);
             if (target) {
                 const dx = target.x - player.x;
@@ -396,8 +387,7 @@ class GameState {
         let minDistance = Infinity;
         
         this.players.forEach(player => {
-            // skip chasers, invincible players, and players currently in safe zones
-            if (!player.isChaser && !player.isInvincible && !player.inSafeZone) {
+            if (!player.isChaser && !player.isInvincible) {
                 const distance = this.getDistance(chaser, player);
                 if (distance < minDistance) {
                     minDistance = distance;
@@ -452,7 +442,6 @@ class GameState {
     
     handlePlayerCollision(p1, p2, i1, i2) {
         // Check if one is chaser and other is not
-        // Also ensure runner is NOT in a safe zone (safe zones are updated before collisions)
         if (p1.isChaser && !p2.isChaser && !p2.isInvincible && !p2.inSafeZone) {
             this.tagPlayer(p1, p2, i1, i2);
         } else if (p2.isChaser && !p1.isChaser && !p1.isInvincible && !p1.inSafeZone) {
@@ -461,60 +450,55 @@ class GameState {
     }
     
     tagPlayer(chaser, runner, chaserIndex, runnerIndex) {
-        // 🛡️ Prevent tagging if runner is in a safe zone (extra guard)
-        if (this.isInSafeZone && typeof this.isInSafeZone === 'function') {
-            if (this.isInSafeZone(runner) && !runner.isChaser) {
-                console.log(`SAFE: Player ${runnerIndex + 1} is in safe zone and cannot be tagged`);
-                return;
-            }
-        } else if (runner.inSafeZone) {
-            // fallback guard
-            console.log(`SAFE (fallback): Player ${runnerIndex + 1} is in safe zone and cannot be tagged`);
-            return;
-        }
-
-        this.lastTagTime = Date.now();
-
-        if (this.gameMode === 'single') {
-            // Single chaser mode: switch roles
-            chaser.isChaser = false;
-            runner.isChaser = true;
-
-            // Tag-back logic: brief window where previous chaser can tag back
-            chaser.canTagBack = true;
-            setTimeout(() => { chaser.canTagBack = false; }, 1500);
-            runner.canTagBack = false;
-
-            console.log(`TAG (single): Player ${chaserIndex + 1} tagged Player ${runnerIndex + 1}`);
-
-            // Update UI
-            if (runnerIndex === this.playerIndex) {
-                document.getElementById('roleText').textContent = 'Chaser';
-                document.getElementById('playerRole').className = 'status-indicator chaser';
-            } else if (chaserIndex === this.playerIndex) {
-                document.getElementById('roleText').textContent = 'Runner';
-                document.getElementById('playerRole').className = 'status-indicator runner';
-            }
-        } else {
-            // Multi-chaser mode
-            runner.isChaser = true;
-            this.taggedPlayers.push({
-                playerId: runnerIndex,
-                time: Date.now() - this.gameStartTime,
-                taggedBy: chaserIndex
-            });
-
-            console.log(`TAG (multi): Player ${chaserIndex + 1} tagged Player ${runnerIndex + 1}`);
-
-            // Update UI
-            if (runnerIndex === this.playerIndex) {
-                document.getElementById('roleText').textContent = 'Chaser';
-                document.getElementById('playerRole').className = 'status-indicator chaser';
-            }
-        }
-
-        this.updateGameUI();
+    // 🛡️ Prevent tagging if runner is in a safe zone
+    if (this.isInSafeZone(runner) && !runner.isChaser) {
+        console.log(`SAFE: Player ${runnerIndex + 1} is in safe zone and cannot be tagged`);
+        return;
     }
+
+    this.lastTagTime = Date.now();
+
+    if (this.gameMode === 'single') {
+        // Single chaser mode: switch roles
+        chaser.isChaser = false;
+        runner.isChaser = true;
+
+        // Tag-back logic
+        chaser.canTagBack = true;
+        setTimeout(() => { chaser.canTagBack = false; }, 50500);
+        runner.canTagBack = true;
+
+        console.log(`TAG (single): Player ${chaserIndex + 1} tagged Player ${runnerIndex + 1}`);
+
+        // Update UI
+        if (runnerIndex === this.playerIndex) {
+            document.getElementById('roleText').textContent = 'Chaser';
+            document.getElementById('playerRole').className = 'status-indicator chaser';
+        } else if (chaserIndex === this.playerIndex) {
+            document.getElementById('roleText').textContent = 'Runner';
+            document.getElementById('playerRole').className = 'status-indicator runner';
+        }
+    } 
+    else {
+        // Multi-chaser mode
+        runner.isChaser = true;
+        this.taggedPlayers.push({
+            playerId: runnerIndex,
+            time: Date.now() - this.gameStartTime,
+            taggedBy: chaserIndex
+        });
+
+        console.log(`TAG (multi): Player ${chaserIndex + 1} tagged Player ${runnerIndex + 1}`);
+
+        // Update UI
+        if (runnerIndex === this.playerIndex) {
+            document.getElementById('roleText').textContent = 'Chaser';
+            document.getElementById('playerRole').className = 'status-indicator chaser';
+        }
+    }
+
+    this.updateGameUI();
+}
     
     checkSafeZoneCollisions() {
         this.safeZones.forEach(zone => {
@@ -522,7 +506,7 @@ class GameState {
             
             this.players.forEach((player, index) => {
                 if (player.x >= zone.x && player.x <= zone.x + zone.width &&
-                    player.y >= zone.y && player.y <= zone.y + zone.width) {
+                    player.y >= zone.y && player.y <= zone.y + zone.height) {
                     
                     zone.occupants.push(index);
                     player.inSafeZone = true;
@@ -643,16 +627,6 @@ class GameState {
         // Clear canvas
         this.ctx.fillStyle = '#2ecc71';
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-
-        drawMap() {
-            if (this.mapImage.complete) {
-                this.ctx.drawImage(this.mapImage, 0, 0, this.canvas.width, this.canvas.height);
-            } else {
-                this.ctx.fillStyle = "#8FBC8F"; // fallback color (green grass)
-                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-            }
-        }
-
         
         // Draw safe zones
         this.ctx.fillStyle = '#3498db';
@@ -844,7 +818,9 @@ class GameState {
                 }
                 rankingsList.appendChild(li);
             });
-        } else {
+        } 
+        runner.canTagBack = false;
+    else {
             document.querySelector('.leaderboard').style.display = 'none';
         }
         
@@ -914,5 +890,8 @@ const game = new GameState();
 document.addEventListener('DOMContentLoaded', () => {
     game.init();
 });
+
+
+
 
 
