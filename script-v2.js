@@ -1,3 +1,4 @@
+
 // Game state management
 class GameState {
     constructor() {
@@ -37,17 +38,13 @@ class GameState {
         this.setupEventListeners();
         this.showScreen('mainMenu');
 
-        // Show mobile controls only on touch devices
-        if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
-            document.getElementById('mobileControlsLeft').style.display = 'flex';
-            document.getElementById('mobileControlsRight').style.display = 'flex';
-        } else {
-            document.getElementById('mobileControlsLeft').style.display = 'none';
-            document.getElementById('mobileControlsRight').style.display = 'none';
-        }
-
+        // 🔹 Force-show mobile controls for testing
+        const leftCtrl = document.getElementById('mobileControlsLeft');
+        const rightCtrl = document.getElementById('mobileControlsRight');
+        if (leftCtrl) leftCtrl.style.display = 'flex';
+        if (rightCtrl) rightCtrl.style.display = 'flex';
     }
-    
+
     setupEventListeners() {
 
         // Menu navigation
@@ -302,9 +299,10 @@ class GameState {
             player.update(deltaTime);
         });
         
-        // Check collisions
-        this.checkPlayerCollisions();
+        // IMPORTANT: update safe zone flags BEFORE collision checks
         this.checkSafeZoneCollisions();
+        // Then check collisions (so tags respect safe zones)
+        this.checkPlayerCollisions();
         this.checkPowerUpCollisions();
         
         // Update safe zone timers
@@ -315,6 +313,9 @@ class GameState {
     }
     
     updateHumanPlayer(player, deltaTime) {
+        // if frozen, don't move
+        if (player.frozen) return;
+
         const speed = player.hasSpeedBoost ? player.speed * 1.5 : player.speed;
         
         if (this.keys['w'] || this.keys['arrowup']) {
@@ -336,10 +337,13 @@ class GameState {
     }
     
     updateAIPlayer(player, deltaTime) {
+        // if frozen, don't move
+        if (player.frozen) return;
+
         const speed = player.hasSpeedBoost ? player.speed * 1.5 : player.speed;
         
         if (player.isChaser) {
-            // Chase nearest non-chaser
+            // Chase nearest non-chaser that is not in a safe zone
             const target = this.findNearestRunner(player);
             if (target) {
                 const dx = target.x - player.x;
@@ -390,7 +394,8 @@ class GameState {
         let minDistance = Infinity;
         
         this.players.forEach(player => {
-            if (!player.isChaser && !player.isInvincible) {
+            // skip chasers, invincible players, and players currently in safe zones
+            if (!player.isChaser && !player.isInvincible && !player.inSafeZone) {
                 const distance = this.getDistance(chaser, player);
                 if (distance < minDistance) {
                     minDistance = distance;
@@ -445,6 +450,7 @@ class GameState {
     
     handlePlayerCollision(p1, p2, i1, i2) {
         // Check if one is chaser and other is not
+        // Also ensure runner is NOT in a safe zone (safe zones are updated before collisions)
         if (p1.isChaser && !p2.isChaser && !p2.isInvincible && !p2.inSafeZone) {
             this.tagPlayer(p1, p2, i1, i2);
         } else if (p2.isChaser && !p1.isChaser && !p1.isInvincible && !p1.inSafeZone) {
@@ -453,30 +459,33 @@ class GameState {
     }
     
     tagPlayer(chaser, runner, chaserIndex, runnerIndex) {
-        // NOTE: previous code blocked tagging based on canTagBack causing initial chaser
-        // to never be able to tag. That check has been removed.
-        // Tag cooldown still prevents spam (checked in checkPlayerCollisions).
+        // 🛡️ Prevent tagging if runner is in a safe zone (extra guard)
+        if (this.isInSafeZone && typeof this.isInSafeZone === 'function') {
+            if (this.isInSafeZone(runner) && !runner.isChaser) {
+                console.log(`SAFE: Player ${runnerIndex + 1} is in safe zone and cannot be tagged`);
+                return;
+            }
+        } else if (runner.inSafeZone) {
+            // fallback guard
+            console.log(`SAFE (fallback): Player ${runnerIndex + 1} is in safe zone and cannot be tagged`);
+            return;
+        }
+
         this.lastTagTime = Date.now();
 
         if (this.gameMode === 'single') {
             // Single chaser mode: switch roles
-            // Previous chaser becomes runner, runner becomes chaser.
-            // We'll allow the previous chaser a short "tag-back window" if desired (1500ms).
             chaser.isChaser = false;
             runner.isChaser = true;
 
-            // Allow previous chaser to tag-back for a small window (optional rule)
+            // Tag-back logic: brief window where previous chaser can tag back
             chaser.canTagBack = true;
             setTimeout(() => { chaser.canTagBack = false; }, 1500);
-
-            // New chaser can't immediately re-tag the previous chaser via this flag,
-            // but tag cooldown and movement usually prevent instant re-tags.
             runner.canTagBack = false;
 
-            // Debug log to help test tags
             console.log(`TAG (single): Player ${chaserIndex + 1} tagged Player ${runnerIndex + 1}`);
 
-            // Update UI if human player involved
+            // Update UI
             if (runnerIndex === this.playerIndex) {
                 document.getElementById('roleText').textContent = 'Chaser';
                 document.getElementById('playerRole').className = 'status-indicator chaser';
@@ -485,7 +494,7 @@ class GameState {
                 document.getElementById('playerRole').className = 'status-indicator runner';
             }
         } else {
-            // Multi-chaser mode: add to chasers
+            // Multi-chaser mode
             runner.isChaser = true;
             this.taggedPlayers.push({
                 playerId: runnerIndex,
@@ -495,13 +504,13 @@ class GameState {
 
             console.log(`TAG (multi): Player ${chaserIndex + 1} tagged Player ${runnerIndex + 1}`);
 
-            // Update UI if human player was tagged
+            // Update UI
             if (runnerIndex === this.playerIndex) {
                 document.getElementById('roleText').textContent = 'Chaser';
                 document.getElementById('playerRole').className = 'status-indicator chaser';
             }
         }
-        
+
         this.updateGameUI();
     }
     
@@ -893,4 +902,3 @@ const game = new GameState();
 document.addEventListener('DOMContentLoaded', () => {
     game.init();
 });
-
