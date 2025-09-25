@@ -643,6 +643,16 @@ class GameState {
         // Clear canvas
         this.ctx.fillStyle = '#2ecc71';
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+        drawMap() {
+            if (this.mapImage.complete) {
+                this.ctx.drawImage(this.mapImage, 0, 0, this.canvas.width, this.canvas.height);
+            } else {
+                this.ctx.fillStyle = "#8FBC8F"; // fallback color (green grass)
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+            }
+        }
+
         
         // Draw safe zones
         this.ctx.fillStyle = '#3498db';
@@ -904,4 +914,5 @@ const game = new GameState();
 document.addEventListener('DOMContentLoaded', () => {
     game.init();
 });
+
 
