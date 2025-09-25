@@ -36,9 +36,20 @@ class GameState {
         this.ctx = this.canvas.getContext('2d');
         this.setupEventListeners();
         this.showScreen('mainMenu');
+
+        // Show mobile controls only on touch devices
+        if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+            document.getElementById('mobileControlsLeft').style.display = 'flex';
+            document.getElementById('mobileControlsRight').style.display = 'flex';
+        } else {
+            document.getElementById('mobileControlsLeft').style.display = 'none';
+            document.getElementById('mobileControlsRight').style.display = 'none';
+        }
+
     }
     
     setupEventListeners() {
+
         // Menu navigation
         document.getElementById('instructionsBtn').addEventListener('click', () => {
             this.showScreen('instructionsScreen');
@@ -93,6 +104,27 @@ class GameState {
         document.addEventListener('keyup', (e) => {
             this.keys[e.key.toLowerCase()] = false;
         });
+
+        // MOBILE: if you previously added mobile buttons, they'll set keys['w','a','s','d'] accordingly
+        // Mobile controls (works for both left + right)
+        document.querySelectorAll('.ctrl-btn').forEach(btn => {
+            const dir = btn.dataset.dir;
+            btn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                if (dir === 'up') this.keys['w'] = true;
+                if (dir === 'down') this.keys['s'] = true;
+                if (dir === 'left') this.keys['a'] = true;
+                if (dir === 'right') this.keys['d'] = true;
+            });
+            btn.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                if (dir === 'up') this.keys['w'] = false;
+                if (dir === 'down') this.keys['s'] = false;
+                if (dir === 'left') this.keys['a'] = false;
+                if (dir === 'right') this.keys['d'] = false;
+            });
+        });
+        // (If mobile control elements exist, attach their listeners in HTML / CSS changes)
     }
     
     showScreen(screenName) {
@@ -159,7 +191,10 @@ class GameState {
     
     assignInitialRoles() {
         // Reset all players
-        this.players.forEach(player => player.isChaser = false);
+        this.players.forEach(player => {
+            player.isChaser = false;
+            player.canTagBack = false;
+        });
         this.taggedPlayers = [];
         
         let chaserIndex;
@@ -175,6 +210,7 @@ class GameState {
         }
         
         this.players[chaserIndex].isChaser = true;
+        // initial chaser can tag others normally; do not block them
         this.players[chaserIndex].canTagBack = false;
         
         // Update UI role indicator
@@ -417,20 +453,29 @@ class GameState {
     }
     
     tagPlayer(chaser, runner, chaserIndex, runnerIndex) {
-        // Prevent tag-back immediately after being tagged (single mode only)
-        if (this.gameMode === 'single' && !chaser.canTagBack) {
-            return;
-        }
-        
+        // NOTE: previous code blocked tagging based on canTagBack causing initial chaser
+        // to never be able to tag. That check has been removed.
+        // Tag cooldown still prevents spam (checked in checkPlayerCollisions).
         this.lastTagTime = Date.now();
-        
+
         if (this.gameMode === 'single') {
             // Single chaser mode: switch roles
+            // Previous chaser becomes runner, runner becomes chaser.
+            // We'll allow the previous chaser a short "tag-back window" if desired (1500ms).
             chaser.isChaser = false;
-            chaser.canTagBack = false;
             runner.isChaser = true;
-            runner.canTagBack = true;
-            
+
+            // Allow previous chaser to tag-back for a small window (optional rule)
+            chaser.canTagBack = true;
+            setTimeout(() => { chaser.canTagBack = false; }, 1500);
+
+            // New chaser can't immediately re-tag the previous chaser via this flag,
+            // but tag cooldown and movement usually prevent instant re-tags.
+            runner.canTagBack = false;
+
+            // Debug log to help test tags
+            console.log(`TAG (single): Player ${chaserIndex + 1} tagged Player ${runnerIndex + 1}`);
+
             // Update UI if human player involved
             if (runnerIndex === this.playerIndex) {
                 document.getElementById('roleText').textContent = 'Chaser';
@@ -447,7 +492,9 @@ class GameState {
                 time: Date.now() - this.gameStartTime,
                 taggedBy: chaserIndex
             });
-            
+
+            console.log(`TAG (multi): Player ${chaserIndex + 1} tagged Player ${runnerIndex + 1}`);
+
             // Update UI if human player was tagged
             if (runnerIndex === this.playerIndex) {
                 document.getElementById('roleText').textContent = 'Chaser';
@@ -846,3 +893,4 @@ const game = new GameState();
 document.addEventListener('DOMContentLoaded', () => {
     game.init();
 });
+
